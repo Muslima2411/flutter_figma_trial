@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_figma_trial/login_page.dart';
 
+// Enum for user roles
+enum UserRole { manager, employee }
+
 class InitPage extends StatelessWidget {
   const InitPage({Key? key}) : super(key: key);
 

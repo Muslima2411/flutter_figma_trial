@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_figma_trial/manager/manager_main_page.dart';
-// Enum for user roles
-enum UserRole { manager, employee }
+import 'package:flutter_figma_trial/verification_page.dart';
+import 'formatter.dart';
+import 'init_page.dart';
 
-// Reusable Button Widget
 class TimePayButton extends StatelessWidget {
   final String text;
   final VoidCallback? onPressed;
@@ -39,16 +39,12 @@ class TimePayButton extends StatelessWidget {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
-          backgroundColor: Colors.transparent,
         ),
         child: isLoading
-            ? SizedBox(
+            ? const SizedBox(
                 height: 20,
                 width: 20,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  valueColor: AlwaysStoppedAnimation<Color>(defaultBorderColor),
-                ),
+                child: CircularProgressIndicator(strokeWidth: 2),
               )
             : Text(
                 text,
@@ -76,6 +72,7 @@ class _TimePayLoginPageState extends State<LoginPage> {
   final _formKey = GlobalKey<FormState>();
   final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _phoneController = TextEditingController();
 
   bool _isPasswordVisible = false;
   bool _isLoading = false;
@@ -84,11 +81,14 @@ class _TimePayLoginPageState extends State<LoginPage> {
   void dispose() {
     _usernameController.dispose();
     _passwordController.dispose();
+    _phoneController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    final isManager = widget.userRole == UserRole.manager;
+
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: _buildAppBar(),
@@ -103,9 +103,16 @@ class _TimePayLoginPageState extends State<LoginPage> {
                 const SizedBox(height: 40),
                 _buildHeader(),
                 const SizedBox(height: 48),
-                _buildUsernameField(),
-                const SizedBox(height: 20),
-                _buildPasswordField(),
+
+                /// Conditionally show fields
+                if (isManager) ...[
+                  _buildUsernameField(),
+                  const SizedBox(height: 20),
+                  _buildPasswordField(),
+                ] else ...[
+                  _buildPhoneField(),
+                ],
+
                 const SizedBox(height: 32),
                 _buildLoginButton(),
                 const Spacer(),
@@ -122,32 +129,21 @@ class _TimePayLoginPageState extends State<LoginPage> {
       backgroundColor: Colors.transparent,
       elevation: 0,
       systemOverlayStyle: SystemUiOverlayStyle.dark,
-      leading: IconButton(
-        icon: const Icon(Icons.arrow_back_ios, color: Colors.black),
-        onPressed: () => Navigator.of(context).pop(),
-      ),
+      automaticallyImplyLeading: false,
     );
   }
 
   Widget _buildHeader() {
-    String roleText = widget.userRole == UserRole.manager
-        ? 'Bo\'lim boshlig\'i'
-        : 'Xodim';
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
+        const Text(
           'Xush kelibsiz',
-          style: TextStyle(
-            fontSize: 28,
-            fontWeight: FontWeight.bold,
-            color: Colors.black,
-          ),
+          style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 8),
         Text(
-          'Biz bilan bog\'lanish ($roleText)',
+          'Biz bilan bog\'lanish',
           style: TextStyle(fontSize: 16, color: Colors.grey[600]),
         ),
       ],
@@ -155,97 +151,93 @@ class _TimePayLoginPageState extends State<LoginPage> {
   }
 
   Widget _buildUsernameField() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Foydalanuvchi nomi',
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w500,
-            color: Colors.black,
-          ),
-        ),
-        const SizedBox(height: 8),
-        TextFormField(
-          controller: _usernameController,
-          keyboardType: TextInputType.text,
-          decoration: InputDecoration(
-            hintText: 'Foydalanuvchi nomini kiriting',
-            hintStyle: TextStyle(color: Colors.grey[400], fontSize: 16),
-            filled: true,
-            fillColor: Colors.grey[50],
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: Colors.grey[300]!),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: Colors.grey[300]!),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: Color(0xFF2D5A27), width: 2),
-            ),
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 16,
-            ),
-          ),
-          validator: (value) => _validateUsername(value),
-        ),
-      ],
+    return _labeledField(
+      label: 'Foydalanuvchi nomi',
+      child: TextFormField(
+        controller: _usernameController,
+        keyboardType: TextInputType.text,
+        decoration: _inputDecoration('Foydalanuvchi nomini kiriting'),
+        validator: _validateUsername,
+      ),
     );
   }
 
   Widget _buildPasswordField() {
+    return _labeledField(
+      label: 'Parol',
+      child: TextFormField(
+        controller: _passwordController,
+        obscureText: !_isPasswordVisible,
+        decoration: _inputDecoration(
+          'Foydalanuvchi parolini kiriting',
+          suffixIcon: IconButton(
+            icon: Icon(
+              _isPasswordVisible ? Icons.visibility : Icons.visibility_off,
+              color: Colors.grey[400],
+            ),
+            onPressed: () =>
+                setState(() => _isPasswordVisible = !_isPasswordVisible),
+          ),
+        ),
+        validator: _validatePassword,
+      ),
+    );
+  }
+
+  Widget _buildPhoneField() {
+    return _labeledField(
+      label: 'Telefon raqami',
+      child: TextFormField(
+        controller: _phoneController,
+        keyboardType: TextInputType.phone,
+        inputFormatters: [
+          FilteringTextInputFormatter.digitsOnly,
+          UzbekPhoneFormatter(), // ← auto-format here
+        ],
+        decoration: _inputDecoration('+998 (XX) XXX-XX-XX'),
+        validator: _validatePhone,
+      ),
+    );
+  }
+
+  Widget _labeledField({required String label, required Widget child}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Parol',
-          style: TextStyle(
+          label,
+          style: const TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w500,
             color: Colors.black,
           ),
         ),
         const SizedBox(height: 8),
-        TextFormField(
-          controller: _passwordController,
-          obscureText: !_isPasswordVisible,
-          decoration: InputDecoration(
-            hintText: 'Foydalanuvchi parolini kiriting',
-            hintStyle: TextStyle(color: Colors.grey[400], fontSize: 16),
-            filled: true,
-            fillColor: Colors.grey[50],
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: Colors.grey[300]!),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: Colors.grey[300]!),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: Color(0xFF2D5A27), width: 2),
-            ),
-            suffixIcon: IconButton(
-              icon: Icon(
-                _isPasswordVisible ? Icons.visibility : Icons.visibility_off,
-                color: Colors.grey[400],
-              ),
-              onPressed: () => _togglePasswordVisibility(),
-            ),
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 16,
-            ),
-          ),
-          validator: (value) => _validatePassword(value),
-        ),
+        child,
       ],
+    );
+  }
+
+  InputDecoration _inputDecoration(String hint, {Widget? suffixIcon}) {
+    return InputDecoration(
+      hintText: hint,
+      hintStyle: TextStyle(color: Colors.grey[400], fontSize: 16),
+      filled: true,
+      fillColor: Colors.grey[50],
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: Colors.grey[300]!),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: Colors.grey[300]!),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: Color(0xFF2D5A27), width: 2),
+      ),
+      suffixIcon: suffixIcon,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
     );
   }
 
@@ -257,54 +249,46 @@ class _TimePayLoginPageState extends State<LoginPage> {
     );
   }
 
-  void _togglePasswordVisibility() {
-    setState(() {
-      _isPasswordVisible = !_isPasswordVisible;
-    });
-  }
-
   String? _validateUsername(String? value) {
-    if (value == null || value.isEmpty) {
-      return 'Foydalanuvchi nomini kiriting';
-    }
-    if (value.length < 3) {
-      return 'Foydalanuvchi nomi kamida 3 ta belgi bo\'lishi kerak';
-    }
+    if (value == null || value.isEmpty) return 'Foydalanuvchi nomini kiriting';
+    if (value.length < 3) return 'Kamida 3 ta belgi bo\'lishi kerak';
     return null;
   }
 
   String? _validatePassword(String? value) {
-    if (value == null || value.isEmpty) {
-      return 'Parolni kiriting';
-    }
-    if (value.length < 6) {
-      return 'Parol kamida 6 ta belgi bo\'lishi kerak';
-    }
+    if (value == null || value.isEmpty) return 'Parolni kiriting';
+    if (value.length < 6) return 'Parol kamida 6 ta belgi bo\'lishi kerak';
+    return null;
+  }
+
+  String? _validatePhone(String? value) {
+    final digits = value?.replaceAll(RegExp(r'\D'), '') ?? '';
+    if (digits.length != 12) return 'To‘liq telefon raqamini kiriting';
     return null;
   }
 
   Future<void> _handleLogin() async {
     if (!_formKey.currentState!.validate()) return;
-
     setState(() => _isLoading = true);
 
     try {
-      // Simulate API call
       await Future.delayed(const Duration(seconds: 2));
 
-      // On success, navigate to ManagerMainPage
       if (widget.userRole == UserRole.manager) {
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => const ManagerMainPage()),
+          MaterialPageRoute(builder: (_) => const ManagerMainPage()),
+        );
+      } else {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const VerificationPage()),
         );
       }
     } catch (error) {
       _showErrorMessage(error.toString());
     } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
