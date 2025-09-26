@@ -20,7 +20,7 @@ class TimePayApp extends StatelessWidget {
         fontFamily: 'SF Pro Display', // Use system font
         visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
-      home: ManagerMainPage(),
+      home: InitPage(),
       debugShowCheckedModeBanner: false,
     );
   }
