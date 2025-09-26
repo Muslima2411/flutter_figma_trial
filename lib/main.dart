@@ -1,10 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_figma_trial/init_page.dart';
 import 'package:flutter_figma_trial/manager/main_dashboard_page.dart';
 import 'package:flutter_figma_trial/manager/manager_main_page.dart';
 import 'package:flutter_figma_trial/staff/staff_main_page.dart';
 
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
+  SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitUp,
+    DeviceOrientation.portraitDown,
+  ]);
   runApp(const TimePayApp());
 }
 
