@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_figma_trial/staff/face_verification_page.dart';
 
 class StaffHomePage extends StatefulWidget {
   const StaffHomePage({super.key});
@@ -334,9 +335,10 @@ class _HomePageState extends State<StaffHomePage> {
   }
 
   void _handleDeparture() {
-    setState(() {
-      hasLeftToday = true;
-    });
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (c) => FaceVerificationPage()),
+    );
 
     // Here you would typically:
     // 1. Send departure time to your backend
