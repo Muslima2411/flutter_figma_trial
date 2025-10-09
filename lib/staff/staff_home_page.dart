@@ -11,8 +11,7 @@ class StaffHomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<StaffHomePage> {
-  bool hasArrivedToday =
-      false; // This would come from your backend/state management
+  bool hasArrivedToday = false;
   bool hasLeftToday = false;
 
   @override
