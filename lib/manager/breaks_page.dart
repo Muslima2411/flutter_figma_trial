@@ -8,6 +8,8 @@ class BreaksPage extends StatelessWidget {
     // Example break data. Replace with your real list or Bloc/Provider data.
     final List<Map<String, String>> breaks = [
       {'name': 'Obed 1', 'start': '12:00', 'end': '13:00'},
+      {'name': 'Obed 1', 'start': '12:00', 'end': '13:00'},
+      {'name': 'Obed 1', 'start': '12:00', 'end': '13:00'},
       {'name': 'Tanaffus', 'start': '16:15', 'end': '16:45'},
       {'name': 'Obed 2', 'start': '22:00', 'end': '22:30'},
       {'name': 'Tanaffus', 'start': '01:15', 'end': '01:45'},
